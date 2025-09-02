@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Update Message Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a1a1a;
+            color: #ffffff;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            min-height: 100vh;
+        }
+
+        .input-section {
+            background: #2d2d2d;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .preview-section {
+            background: #2d2d2d;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            position: sticky;
+            top: 20px;
+            height: fit-content;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+        }
+
+        h1, h2 {
+            margin-bottom: 20px;
+            color: #4CAF50;
+        }
+
+        h1 {
+            text-align: center;
+            grid-column: 1 / -1;
+            background: #2d2d2d;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 0;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .label-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .editable-label {
+            color: #cccccc;
+            font-weight: 500;
+            cursor: text;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+            min-width: 50px;
+        }
+
+        .editable-label:hover {
+            background-color: #404040;
+        }
+
+        .editable-label input {
+            background: transparent;
+            border: none;
+            color: #cccccc;
+            font-weight: 500;
+            font-size: inherit;
+            width: 100%;
+            padding: 0;
+            margin: 0;
+            min-width: 80px;
+        }
+
+        .editable-label input:focus {
+            outline: none;
+        }
+
+        .edit-icon {
+            cursor: pointer;
+            color: #888;
+            font-size: 12px;
+            padding: 2px;
+            border-radius: 3px;
+            transition: color 0.3s ease, background-color 0.3s ease;
+        }
+
+        .edit-icon:hover {
+            color: #4CAF50;
+            background-color: #404040;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #404040;
+            border-radius: 6px;
+            background: #1a1a1a;
+            color: #ffffff;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .task-prefix {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: #404040;
+            padding: 8px 12px;
+            border-radius: 4px;
+            min-width: 120px;
+        }
+
+        .task-prefix input {
+            background: transparent;
+            border: none;
+            color: #ffffff;
+            font-size: 14px;
+            width: 100%;
+            padding: 0;
+            margin: 0;
+        }
+
+        .task-prefix input:focus {
+            outline: none;
+        }
+
+        .comment-prefix {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: #404040;
+            padding: 8px 12px;
+            border-radius: 4px;
+            min-width: 100px;
+        }
+
+        .comment-prefix input {
+            background: transparent;
+            border: none;
+            color: #ffffff;
+            font-size: 14px;
+            width: 100%;
+            padding: 0;
+            margin: 0;
+        }
+
+        .comment-prefix input:focus {
+            outline: none;
+        }
+
+        .remove-task, .remove-custom {
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+
+        .add-task, .add-custom, .add-field-btn, .copy-btn, .clear-btn, .reset-labels-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+
+        .add-task:hover, .add-custom:hover, .add-field-btn:hover, .copy-btn:hover, .reset-labels-btn:hover {
+            background: #45a049;
+        }
+
+        .add-field-btn {
+            background: #2196F3;
+            font-size: 12px;
+            padding: 6px 12px;
+        }
+
+        .add-field-btn:hover {
+            background: #1976D2;
+        }
+
+        .clear-btn {
+            background: #ff6b6b;
+        }
+
+        .clear-btn:hover {
+            background: #ff5252;
+        }
+
+        .reset-labels-btn {
+            background: #607D8B;
+        }
+
+        .reset-labels-btn:hover {
+            background: #546E7A;
+        }
+
+        .preview {
+            background: #1a1a1a;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #404040;
+            font-family: monospace;
+            white-space: pre-wrap;
+            line-height: 1.8;
+            min-height: 400px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .success-message {
+            background: #4CAF50;
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            display: none;
+        }
+
+        .task-item-container, .custom-item-container {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-radius: 8px;
+            cursor: move;
+            position: relative;
+        }
+
+        .task-item-container.dragging, .custom-item-container.dragging {
+            opacity: 0.5;
+            transform: rotate(2deg);
+        }
+
+        .drag-handle {
+            position: absolute;
+            left: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #888;
+            cursor: move;
+            font-size: 16px;
+            padding: 5px;
+        }
+
+        .drag-handle:hover {
+            color: #4CAF50;
+        }
+
+        .task-inputs, .custom-inputs {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-left: 25px;
+        }
+
+        .input-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .custom-input-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .custom-input {
+            flex: 1;
+            background: #1a1a1a;
+            border: 2px solid #404040;
+            border-radius: 6px;
+            color: #ffffff;
+            padding: 12px;
+            font-size: 14px;
+        }
+
+        .custom-input:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        .section-divider {
+            text-align: center;
+            margin: 10px 0;
+            position: relative;
+        }
+
+        .section-divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #404040;
+            z-index: 1;
+        }
+
+        .section-divider .add-field-btn {
+            position: relative;
+            z-index: 2;
+            background: #2d2d2d;
+            border: 1px solid #404040;
+        }
+
+        /* Custom field styling - no label, simple design */
+        .custom-field {
+            background: #333;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            position: relative;
+        }
+
+        .custom-field .remove-custom {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        .custom-field textarea {
+            width: 100%;
+            min-height: 60px;
+            margin-right: 60px; /* Make room for remove button */
+        }
+
+        /* Special styling for the "before task" section */
+        .before-task-section {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px dashed #404040;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .preview-section {
+                position: static;
+                max-height: none;
+            }
+            
+            .input-row, .custom-input-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .task-prefix, .comment-prefix {
+                min-width: unset;
+            }
+        }
+
+        /* Scrollbar styling for preview */
+        .preview::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .preview::-webkit-scrollbar-track {
+            background: #2d2d2d;
+        }
+
+        .preview::-webkit-scrollbar-thumb {
+            background: #4CAF50;
+            border-radius: 4px;
+        }
+
+        .preview::-webkit-scrollbar-thumb:hover {
+            background: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Client Update Message Generator</h1>
+        
+        <div class="input-section">
+            <h2>Input Details</h2>
+            
+            <!-- Before Task Section -->
+            <div class="before-task-section">
+                <div class="section-divider">
+                    <button class="add-field-btn" onclick="addCustomFieldAfter(0)">+ Add Field Before Task</button>
+                </div>
+            </div>
+            
+            <!-- Task Section -->
+            <div class="form-group" data-label="Task" data-order="1">
+                <div class="label-group">
+                    <div class="editable-label" onclick="editLabel(this)">
+                        <span class="label-text">Task</span>
+                        <input type="text" style="display: none;" onblur="saveLabel(this)" onkeypress="handleLabelKeypress(event, this)">
+                    </div>
+                    <span class="edit-icon" onclick="editLabel(this.previousElementSibling)">✏️</span>
+                </div>
+                <input type="text" id="task" placeholder="e.g., Eastern Armory Inc" oninput="updatePreview()">
+            </div>
+            <div class="section-divider">
+                <button class="add-field-btn" onclick="addCustomFieldAfter(1)">+ Add Field After Task</button>
+            </div>
+
+            <!-- URL Section -->
+            <div class="form-group" data-label="URL" data-order="2">
+                <div class="label-group">
+                    <div class="editable-label" onclick="editLabel(this)">
+                        <span class="label-text">URL</span>
+                        <input type="text" style="display: none;" onblur="saveLabel(this)" onkeypress="handleLabelKeypress(event, this)">
+                    </div>
+                    <span class="edit-icon" onclick="editLabel(this.previousElementSibling)">✏️</span>
+                </div>
+                <input type="url" id="url" placeholder="https://example.com" oninput="updatePreview()">
+            </div>
+            <div class="section-divider">
+                <button class="add-field-btn" onclick="addCustomFieldAfter(2)">+ Add Field After URL</button>
+            </div>
+
+            <!-- Opening Message Section -->
+            <div class="form-group" data-label="Opening Message" data-order="3">
+                <div class="label-group">
+                    <div class="editable-label">
+                        <span class="label-text">Opening Message</span>
+                    </div>
+                </div>
+                <textarea id="opening-message" placeholder="Please find the latest updates on the project below:" oninput="updatePreview()">Please find the latest updates on the project below:</textarea>
+            </div>
+            <div class="section-divider">
+                <button class="add-field-btn" onclick="addCustomFieldAfter(3)">+ Add Field After Opening Message</button>
+            </div>
+
+            <!-- Task Updates Section -->
+            <div class="form-group" data-label="Task Updates" data-order="4">
+                <div class="label-group">
+                    <div class="editable-label">
+                        <span class="label-text">Task Updates</span>
+                    </div>
+                </div>
+                <div id="sortable-container"></div>
+                <button type="button" class="add-task" onclick="addTaskUpdate()">Add Task Update</button>
+                <button type="button" class="add-custom" onclick="addCustomInput()">Add Custom Field</button>
+            </div>
+            <div class="section-divider">
+                <button class="add-field-btn" onclick="addCustomFieldAfter(4)">+ Add Field After Task Updates</button>
+            </div>
+
+            <!-- Closing Message Section -->
+            <div class="form-group" data-label="Closing Message" data-order="5">
+                <div class="label-group">
+                    <div class="editable-label">
+                        <span class="label-text">Closing Message</span>
+                    </div>
+                </div>
+                <textarea id="closing-message" placeholder="Kindly review and let me know if you need any changes." oninput="updatePreview()">Kindly review and let me know if you need any changes.</textarea>
+            </div>
+            <div class="section-divider">
+                <button class="add-field-btn" onclick="addCustomFieldAfter(5)">+ Add Field After Closing Message</button>
+            </div>
+
+            <!-- Time Section -->
+            <div class="form-group" data-label="Time" data-order="6">
+                <div class="label-group">
+                    <div class="editable-label" onclick="editLabel(this)">
+                        <span class="label-text">Time</span>
+                        <input type="text" style="display: none;" onblur="saveLabel(this)" onkeypress="handleLabelKeypress(event, this)">
+                    </div>
+                    <span class="edit-icon" onclick="editLabel(this.previousElementSibling)">✏️</span>
+                </div>
+                <input type="text" id="time" placeholder="03:50 Hours" oninput="updatePreview()">
+            </div>
+            <div class="section-divider">
+                <button class="add-field-btn" onclick="addCustomFieldAfter(6)">+ Add Field After Time</button>
+            </div>
+
+            <!-- Control Buttons -->
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #404040;">
+                <button type="button" class="clear-btn" onclick="clearAll()">Clear All</button>
+                <button type="button" class="reset-labels-btn" onclick="resetLabels()">Reset Labels</button>
+            </div>
+        </div>
+
+        <div class="preview-section">
+            <h2>Preview</h2>
+            <div class="success-message" id="success-message">Message copied to clipboard!</div>
+            <div class="preview" id="preview"></div>
+            <button type="button" class="copy-btn" onclick="copyToClipboard()">Copy to Clipboard</button>
+        </div>
+    </div>
+
+    <script>
+        let defaultTaskPrefix = '->';
+        let defaultCommentPrefix = 'Comment:';
+        let draggedElement = null;
+        let customFieldCounter = 0;
+        let customFields = {};
+
+        window.onload = function() {
+            document.getElementById('task').value = 'Eastern Armory Inc';
+            document.getElementById('url').value = 'https://easternarmory.orchidnow.com/';
+            document.getElementById('time').value = '03:50 Hours';
+            
+            const sampleTasks = [
+                { question: 'have you done with task???', comment: 'Done' },
+                { question: 'are you done with design?', comment: 'Done' },
+                { question: 'make change on design', comment: 'Done, I complete it' }
+            ];
+            
+            sampleTasks.forEach(task => {
+                addTaskUpdate(task.question, task.comment);
+            });
+            
+            setTimeout(updatePreview, 100);
+        };
+
+        function editLabel(labelElement) {
+            const span = labelElement.querySelector('.label-text');
+            const input = labelElement.querySelector('input');
+            
+            if (span && input) {
+                input.setAttribute('data-original-value', span.textContent);
+                input.value = span.textContent;
+                span.style.display = 'none';
+                input.style.display = 'inline';
+                input.focus();
+                input.select();
+            }
+        }
+
+        function saveLabel(inputElement) {
+            const labelElement = inputElement.parentElement;
+            const span = labelElement.querySelector('.label-text');
+            const originalValue = inputElement.getAttribute('data-original-value');
+            
+            if (!inputElement.value.trim()) {
+                span.textContent = originalValue;
+                inputElement.style.borderColor = '#ff4444';
+                setTimeout(() => {
+                    inputElement.style.borderColor = '';
+                }, 1000);
+            } else {
+                span.textContent = inputElement.value.trim();
+            }
+            
+            span.style.display = 'inline';
+            inputElement.style.display = 'none';
+            updatePreview();
+        }
+
+        function handleLabelKeypress(event, inputElement) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                saveLabel(inputElement);
+            } else if (event.key === 'Escape') {
+                event.preventDefault();
+                const span = inputElement.parentElement.querySelector('.label-text');
+                const originalValue = inputElement.getAttribute('data-original-value');
+                span.textContent = originalValue;
+                span.style.display = 'inline';
+                inputElement.style.display = 'none';
+            }
+        }
+
+        function addCustomFieldAfter(order) {
+            customFieldCounter++;
+            const fieldId = `custom-field-${customFieldCounter}`;
+            
+            const customFieldHtml = `
+                <div class="form-group custom-field" data-field-id="${fieldId}" data-order="${order}">
+                    <button class="remove-custom" onclick="removeCustomField('${fieldId}')">Remove</button>
+                    <textarea id="${fieldId}" placeholder="Enter your custom content here..." oninput="updatePreview()"></textarea>
+                </div>
+            `;
+
+            if (order === 0) {
+                // Insert before task - find the before-task-section
+                const beforeTaskSection = document.querySelector('.before-task-section');
+                beforeTaskSection.insertAdjacentHTML('beforeend', customFieldHtml);
+            } else {
+                // Insert after the specified section
+                const sectionDividers = document.querySelectorAll('.section-divider');
+                const targetDivider = sectionDividers[order]; // order is already adjusted since we added one more divider
+                
+                if (targetDivider) {
+                    targetDivider.insertAdjacentHTML('afterend', customFieldHtml);
+                }
+            }
+            
+            customFields[fieldId] = order;
+            updatePreview();
+        }
+
+        function removeCustomField(fieldId) {
+            const fieldElement = document.querySelector(`[data-field-id="${fieldId}"]`);
+            if (fieldElement) {
+                fieldElement.remove();
+                delete customFields[fieldId];
+                updatePreview();
+            }
+        }
+
+        function editPrefix(prefixElement) {
+            const input = prefixElement.querySelector('input');
+            input.focus();
+            input.select();
+        }
+
+        function addTaskUpdate(question = '', comment = '') {
+            const container = document.getElementById('sortable-container');
+            const taskItem = document.createElement('div');
+            taskItem.className = 'task-item-container';
+            taskItem.draggable = true;
+            taskItem.innerHTML = `
+                <div class="drag-handle">⋮⋮</div>
+                <div class="task-inputs">
+                    <div class="input-row">
+                        <div class="task-prefix" onclick="editPrefix(this)">
+                            <input type="text" value="${defaultTaskPrefix}" onblur="updatePreview()" oninput="updatePreview()">
+                            <span class="edit-icon">✏️</span>
+                        </div>
+                        <input type="text" class="task-question" placeholder="Question/Task" value="${question}" oninput="updatePreview()">
+                    </div>
+                    <div class="input-row">
+                        <div class="comment-prefix" onclick="editPrefix(this)">
+                            <input type="text" value="${defaultCommentPrefix}" onblur="updatePreview()" oninput="updatePreview()">
+                            <span class="edit-icon">✏️</span>
+                        </div>
+                        <input type="text" class="task-comment" placeholder="Comment" value="${comment}" oninput="updatePreview()">
+                    </div>
+                </div>
+                <button type="button" class="remove-task" onclick="removeItem(this)">Remove</button>
+            `;
+            
+            addDragEventListeners(taskItem);
+            container.appendChild(taskItem);
+            updatePreview();
+        }
+
+        function addCustomInput() {
+            const container = document.getElementById('sortable-container');
+            const customItem = document.createElement('div');
+            customItem.className = 'custom-item-container';
+            customItem.draggable = true;
+            customItem.innerHTML = `
+                <div class="drag-handle">⋮⋮</div>
+                <div class="custom-inputs">
+                    <div class="custom-input-row">
+                        <input type="text" class="custom-input" placeholder="Enter your custom text here..." oninput="updatePreview()">
+                        <button type="button" class="remove-custom" onclick="removeItem(this)">Remove</button>
+                    </div>
+                </div>
+            `;
+            
+            addDragEventListeners(customItem);
+            container.appendChild(customItem);
+            updatePreview();
+        }
+
+        function removeItem(button) {
+            button.closest('.task-item-container, .custom-item-container').remove();
+            updatePreview();
+        }
+
+        function addDragEventListeners(element) {
+            element.addEventListener('dragstart', function(e) {
+                draggedElement = this;
+                this.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+            });
+
+            element.addEventListener('dragend', function(e) {
+                this.classList.remove('dragging');
+                draggedElement = null;
+            });
+
+            element.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+            });
+
+            element.addEventListener('dragenter', function(e) {
+                e.preventDefault();
+                if (this !== draggedElement) {
+                    this.style.borderTop = '3px solid #4CAF50';
+                }
+            });
+
+            element.addEventListener('dragleave', function(e) {
+                this.style.borderTop = '';
+            });
+
+            element.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.style.borderTop = '';
+                
+                if (this !== draggedElement && draggedElement) {
+                    const container = document.getElementById('sortable-container');
+                    const allItems = Array.from(container.children);
+                    const draggedIndex = allItems.indexOf(draggedElement);
+                    const targetIndex = allItems.indexOf(this);
+                    
+                    if (draggedIndex < targetIndex) {
+                        this.parentNode.insertBefore(draggedElement, this.nextSibling);
+                    } else {
+                        this.parentNode.insertBefore(draggedElement, this);
+                    }
+                    
+                    updatePreview();
+                }
+            });
+        }
+
+        function updatePreview() {
+            try {
+                let message = '';
+                
+                const sections = [
+                    { order: 0, type: 'before-task' },
+                    { order: 1, type: 'task' },
+                    { order: 2, type: 'url' },
+                    { order: 3, type: 'opening' },
+                    { order: 4, type: 'tasks' },
+                    { order: 5, type: 'closing' },
+                    { order: 6, type: 'time' }
+                ];
+
+                sections.forEach(section => {
+                    switch(section.type) {
+                        case 'before-task':
+                            // Handle custom fields before task
+                            break;
+                            
+                        case 'task':
+                            const task = document.getElementById('task').value;
+                            const taskLabel = document.querySelector('[data-label="Task"] .label-text').textContent;
+                            if (task) message += `${taskLabel}: ${task}\n`;
+                            break;
+                            
+                        case 'url':
+                            const url = document.getElementById('url').value;
+                            const urlLabel = document.querySelector('[data-label="URL"] .label-text').textContent;
+                            if (url) message += `${urlLabel}: ${url})\n\n`;
+                            break;
+                            
+                        case 'opening':
+                            const openingMessage = document.getElementById('opening-message').value;
+                            if (openingMessage) message += `${openingMessage}\n\n`;
+                            break;
+                            
+                        case 'tasks':
+                            const container = document.getElementById('sortable-container');
+                            const allItems = container.children;
+                            
+                            for (let item of allItems) {
+                                if (item.classList.contains('task-item-container')) {
+                                    const taskPrefixInput = item.querySelector('.task-prefix input');
+                                    const commentPrefixInput = item.querySelector('.comment-prefix input');
+                                    const questionInput = item.querySelector('.task-question');
+                                    const commentInput = item.querySelector('.task-comment');
+                                    
+                                    if (taskPrefixInput && commentPrefixInput && questionInput && commentInput) {
+                                        const taskPrefix = taskPrefixInput.value;
+                                        const commentPrefix = commentPrefixInput.value;
+                                        const question = questionInput.value;
+                                        const comment = commentInput.value;
+                                        
+                                        if (question || comment) {
+                                            message += `${taskPrefix} ${question}\n${commentPrefix} ${comment}\n\n`;
+                                        }
+                                    }
+                                } else if (item.classList.contains('custom-item-container')) {
+                                    const customInput = item.querySelector('.custom-input');
+                                    if (customInput && customInput.value.trim()) {
+                                        message += `${customInput.value.trim()}\n\n`;
+                                    }
+                                }
+                            }
+                            break;
+                            
+                        case 'closing':
+                            const closingMessage = document.getElementById('closing-message').value;
+                            if (closingMessage) message += `${closingMessage}\n\n`;
+                            break;
+                            
+                        case 'time':
+                            const time = document.getElementById('time').value;
+                            const timeLabel = document.querySelector('[data-label="Time"] .label-text').textContent;
+                            if (time) message += `${timeLabel}: ${time}`;
+                            break;
+                    }
+
+                    // Add custom fields after each section
+                    const customFieldsAfterSection = document.querySelectorAll(`.custom-field[data-order="${section.order}"]`);
+                    customFieldsAfterSection.forEach(field => {
+                        const fieldInput = field.querySelector('textarea');
+                        if (fieldInput && fieldInput.value.trim()) {
+                            if (section.order === 0) {
+                                // For before-task fields, add at the beginning
+                                message = `${fieldInput.value.trim()}\n\n` + message;
+                            } else {
+                                // For after fields, add normally
+                                message += `\n${fieldInput.value.trim()}\n`;
+                            }
+                        }
+                    });
+                });
+
+                const previewElement = document.getElementById('preview');
+                if (previewElement) {
+                    previewElement.textContent = message;
+                }
+            } catch (error) {
+                console.error('Error updating preview:', error);
+            }
+        }
+
+        function copyToClipboard() {
+            const preview = document.getElementById('preview');
+            const text = preview.textContent;
+            
+            navigator.clipboard.writeText(text).then(function() {
+                showSuccessMessage();
+            }).catch(function(err) {
+                console.error('Could not copy text: ', err);
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showSuccessMessage();
+            });
+        }
+
+        function showSuccessMessage() {
+            const successMessage = document.getElementById('success-message');
+            successMessage.style.display = 'block';
+            setTimeout(() => {
+                successMessage.style.display = 'none';
+            }, 2000);
+        }
+
+        function clearAll() {
+            document.getElementById('task').value = '';
+            document.getElementById('url').value = '';
+            document.getElementById('opening-message').value = 'Please find the latest updates on the project below:';
+            document.getElementById('closing-message').value = 'Kindly review and let me know if you need any changes.';
+            document.getElementById('time').value = '';
+            
+            const container = document.getElementById('sortable-container');
+            container.innerHTML = '';
+            
+            const customFieldElements = document.querySelectorAll('.custom-field');
+            customFieldElements.forEach(field => field.remove());
+            customFields = {};
+            
+            addTaskUpdate();
+            updatePreview();
+        }
+
+        function resetLabels() {
+            document.querySelector('[data-label="Task"] .label-text').textContent = 'Task';
+            document.querySelector('[data-label="URL"] .label-text').textContent = 'URL';
+            document.querySelector('[data-label="Time"] .label-text').textContent = 'Time';
+            
+            const taskPrefixes = document.querySelectorAll('.task-prefix input');
+            const commentPrefixes = document.querySelectorAll('.comment-prefix input');
+            
+            taskPrefixes.forEach(prefix => {
+                prefix.value = '->';
+            });
+            
+            commentPrefixes.forEach(prefix => {
+                prefix.value = 'Comment:';
+            });
+            
+            updatePreview();
+        }
+    </script>
+</body>
+</html>
